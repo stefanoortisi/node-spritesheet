@@ -5,7 +5,7 @@ install:
 
 
 watch: 
-	$(COFFEE) -o ./dist -cw src/
+	$(COFFEE) -o ./lib -cw src/
 
 build: 
-	$(COFFEE) -o ./dist -c src/
+	$(COFFEE) -o ./lib -c src/
