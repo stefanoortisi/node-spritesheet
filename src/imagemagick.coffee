@@ -1,5 +1,7 @@
 exec          = require( 'child_process' ).exec
 async         = require( 'async' )
+Utils         = require( './utils' )
+U             = new Utils
 
 class ImageMagick
   
@@ -27,7 +29,7 @@ class ImageMagick
   composite: ( options, callback ) ->
     { filepath, images, width, height, downsampling } = options
   
-    console.log '  Writing images to sprite sheet...'
+    U.log '  Writing images to sprite sheet...'
     
     command = "
       convert
@@ -42,13 +44,13 @@ class ImageMagick
         throw "Error in creating canvas (#{ filepath }): #{ error || stderr }"
       
       compose = ( image, next ) =>
-        console.log "    Composing #{ image.path }"
+        U.log "    Composing #{ image.path }"
         @composeImage filepath, image, downsampling, next
       
       async.forEachSeries images, compose, callback
 
   exec: ( command, callback ) ->
-    #console.log "Exec: #{ command }"
+    #U.log "Exec: #{ command }"
     exec command, callback
     
   composeImage: ( filepath, image, downsampling, callback ) ->

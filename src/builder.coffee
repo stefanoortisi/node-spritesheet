@@ -7,8 +7,9 @@ _             = require( "underscore" )
 ImageMagick   = require( './imagemagick' )
 Layout        = require( './layout' )
 Style         = require( './style' )
-
-separator = path.sep || "/"
+Utils         = require( './utils' )
+U             = new Utils
+separator     = path.sep || "/"
 
 ensureDirectory = ( directory ) ->
   ( callback ) ->
@@ -29,32 +30,23 @@ class SpriteSheetBuilder
     SpriteSheetBuilder.supportsPngcrush ( supported ) ->
       if supported
         crushed = "#{ image }.crushed"
-        console.log "\n  pngcrushing, this may take a few moments...\n"
+        U.log "\n  pngcrushing, this may take a few moments...\n"
         movecmd = if process.platform != "win32" then "mv" else "move"
         exec "pngcrush -reduce #{ image } #{ crushed } && #{ movecmd } #{ crushed } #{ image }", ( error, stdout, stderr ) =>
           callback()
       else
         callback()
 
-  @fromGruntTask: ( options ) ->
-    builder = new SpriteSheetBuilder( options )
-    
-    outputConfigurations = options.output
-    delete options.output
-    
-    if outputConfigurations && Object.keys( outputConfigurations ).length > 0
-    
-      for key of outputConfigurations
-        config = outputConfigurations[ key ]
-        builder.addConfiguration( key, config )
-      
-    return builder
-
   constructor: ( @options ) ->
+
+    U.log_active = @options.log if @options.log
+
     @files = options.images
     @outputConfigurations = {}
     @outputDirectory = path.normalize( options.outputDirectory )
     
+    
+
     if options.outputCss
       @outputStyleFilePath        = [ @outputDirectory, options.outputCss ].join( separator )
       @outputStyleDirectoryPath   = path.dirname( @outputStyleFilePath )
@@ -76,7 +68,7 @@ class SpriteSheetBuilder
     
     return ssc
 
-  build: ( done ) ->
+  build: ( done ) =>
     throw "no output style file specified"  if !@outputStyleFilePath
   
     if Object.keys( @outputConfigurations ).length is 0
@@ -117,7 +109,7 @@ class SpriteSheetBuilder
       if err
         throw err
       else
-        console.log "CSS file written to", @outputStyleFilePath, "\n"
+        U.log "CSS file written to", @outputStyleFilePath, "\n"
         callback()
 
 
@@ -158,9 +150,11 @@ class SpriteSheetConfiguration
   build: ( callback ) =>
     throw "No output image file specified"    if !@outputImageFilePath
     
-    console.log "--------------------------------------------------------------"
-    console.log "Building '#{ @name }' at pixel ratio #{ @pixelRatio }"
-    console.log "--------------------------------------------------------------"
+    
+    
+    U.log "--------------------------------------------------------------"
+    U.log "Building '#{ @name }' at pixel ratio #{ @pixelRatio }"
+    U.log "--------------------------------------------------------------"
     
     # Whether the images in this configuration should be resized, based on the
     # highest-density pixel ratio.
@@ -173,8 +167,9 @@ class SpriteSheetConfiguration
     @layoutImages =>
       if @images.length is 0
         throw "No image files specified"
-      
-      console.log @summary()
+
+      # if @options.log
+      U.log @summary()
       
       @generateCSS()
       
@@ -201,8 +196,8 @@ class SpriteSheetConfiguration
            
            image.width = Math.ceil( image.width )
            image.height = Math.ceil( image.height )
-           
-           console.log( "  WARN: Dimensions for #{ image.filename } don't use multiples of the pixel ratio, so they've been rounded." )
+
+          U.log( "  WARN: Dimensions for #{ image.filename } don't use multiples of the pixel ratio, so they've been rounded." )
         
         image.baseRatio = @baseRatio
       
